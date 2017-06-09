@@ -249,6 +249,7 @@ namespace SharpNav.IO.Binary
                 tile.Bounds = new BBox3(minX, minY, minZ, maxX, maxY, maxZ);
 
                 var polysCount = binaryReader.ReadInt32();
+                var polys = new NavPoly[polysCount];
 
                 for (var i = 0; i < polysCount; i++)
                 {
@@ -294,7 +295,11 @@ namespace SharpNav.IO.Binary
 
                     var areaId = binaryReader.ReadByte();
                     poly.Area = new Area(areaId);
+
+                    polys[i] = poly;
                 }
+
+                tile.Polys = polys;
 
                 var vertsCount = binaryReader.ReadInt32();
                 var verts = new Vector3[vertsCount];
