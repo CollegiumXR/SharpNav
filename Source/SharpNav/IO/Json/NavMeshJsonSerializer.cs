@@ -44,8 +44,7 @@ namespace SharpNav.IO.Json
 			});
 		}
 
-        /*
-		public override void Serialize(string path, TiledNavMesh mesh)
+        public override void Serialize(string path, TiledNavMesh mesh)
 		{
 			JObject root = new JObject();
 
@@ -76,35 +75,6 @@ namespace SharpNav.IO.Json
 			
 			File.WriteAllText(path, root.ToString());
 		}
-        */
-        public override void Serialize(string path, TiledNavMesh mesh)
-        {
-            using (var binaryWriter = new BinaryWriter(new FileStream(path, FileMode.Create, FileAccess.Write)))
-            {
-                binaryWriter.Write((float)mesh.Origin.X);
-                binaryWriter.Write((float)mesh.Origin.Y);
-                binaryWriter.Write((float)mesh.Origin.Z);
-                binaryWriter.Write((float)mesh.TileWidth);
-                binaryWriter.Write((float)mesh.TileHeight);
-                binaryWriter.Write((float)mesh.MaxTiles);
-                binaryWriter.Write((float)mesh.MaxPolys);
-
-                binaryWriter.Write((int)mesh.Tiles.Count);
-
-                var tiles = new List<byte[]>();
-
-                foreach (var tile in mesh.Tiles)
-                {
-                    var id = mesh.GetTileRef(tile);
-                    tiles.Add(SerializeMeshTile(tile, id));
-                }
-
-                foreach (var tile in tiles)
-                {
-                    binaryWriter.Write(tile);
-                }
-            }
-        }
 
         public override TiledNavMesh Deserialize(string path)
 		{
@@ -133,7 +103,6 @@ namespace SharpNav.IO.Json
 			return mesh;
 		}
 
-        /*
 		private JObject SerializeMeshTile(NavTile tile, NavPolyId id)
 		{
 			var result = new JObject();
@@ -162,71 +131,7 @@ namespace SharpNav.IO.Json
 
 			return result;
 		}
-        */
-
-        private byte[] SerializeMeshTile(NavTile tile, NavPolyId id)
-        {
-            var memoryStream = new MemoryStream();
-            using (var binaryWriter = new BinaryWriter(memoryStream))
-            {
-                binaryWriter.Write((int)id.Id);
-                binaryWriter.Write((int)tile.Location.X);
-                binaryWriter.Write((int)tile.Location.Y);
-                binaryWriter.Write((int)tile.Layer);
-                binaryWriter.Write((int)tile.Salt);
-                binaryWriter.Write((float)tile.Bounds.Min.X);
-                binaryWriter.Write((float)tile.Bounds.Min.Y);
-                binaryWriter.Write((float)tile.Bounds.Min.Z);
-                binaryWriter.Write((float)tile.Bounds.Max.X);
-                binaryWriter.Write((float)tile.Bounds.Max.Y);
-                binaryWriter.Write((float)tile.Bounds.Max.Z);
-
-                var polys = new List<NavPoly>(tile.Polys);
-
-                binaryWriter.Write((int)polys.Count);
-
-                foreach (var poly in polys)
-                {
-                    binaryWriter.Write((byte)poly.PolyType);
-
-                    binaryWriter.Write(poly.Links.Count);
-
-                    foreach (var link in poly.Links)
-                    {
-                        binaryWriter.Write((int)link.Reference.Id);
-                        binaryWriter.Write((int)link.Edge);
-                        binaryWriter.Write((byte)link.Side);
-                        binaryWriter.Write((int)link.BMin);
-                        binaryWriter.Write((int)link.BMax);
-                    }
-
-                    var verts = new List<int>(poly.Verts);
-
-                    foreach (var vert in verts)
-                    {
-                        binaryWriter.Write((int)vert);
-                    }
-
-                    var neis = new List<int>(poly.Neis);
-
-                    foreach (var nei in neis)
-                    {
-                        binaryWriter.Write((int)nei);
-                    }
-
-                    if (poly.Tag != null)
-                        binaryWriter.Write((byte)poly.Tag);
-                    else
-                        binaryWriter.Write((byte)0x00);
-
-                    binaryWriter.Write((int)poly.VertCount);
-                    binaryWriter.Write((byte)poly.Area.Id);
-                }
-            }
-
-            return memoryStream.ToArray();
-        }
-
+       
         private NavTile DeserializeMeshTile(JToken token, NavPolyIdManager manager, out NavPolyId refId)
 		{
 			refId = token["polyId"].ToObject<NavPolyId>(serializer);
@@ -255,5 +160,5 @@ namespace SharpNav.IO.Json
 
 			return result;
 		}
-	}
+    }
 }

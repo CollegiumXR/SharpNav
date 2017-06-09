@@ -364,9 +364,17 @@ namespace SharpNav.Examples
 		{
 			try
 			{
+                var extension = System.IO.Path.GetExtension(path);
+                if (extension == ".snb")
+                {
+                    tiledNavMesh = new NavMeshBinarySerializer().Deserialize(path);
+                }
+                else
+                {
+                    tiledNavMesh = new NavMeshJsonSerializer().Deserialize(path);
+                }
 
-				tiledNavMesh = new NavMeshJsonSerializer().Deserialize(path);
-				navMeshQuery = new NavMeshQuery(tiledNavMesh, 2048);
+                navMeshQuery = new NavMeshQuery(tiledNavMesh, 2048);
 				hasGenerated = true;
 				displayMode = DisplayMode.NavMesh;
 			}
@@ -392,20 +400,28 @@ namespace SharpNav.Examples
 				return;
 			}
 
-			try
-			{
-				new NavMeshJsonSerializer().Serialize(path, tiledNavMesh);
-			}
-			catch (Exception e)
-			{
-				if (!interceptExceptions)
-					throw;
-				else
-				{
-					Console.WriteLine("Navmesh saving failed with exception:" + Environment.NewLine + e.ToString());
-					return;
-				}
-			}
+            try
+            {
+                var extension = System.IO.Path.GetExtension(path);
+                if (extension == ".snb")
+                {
+                    new NavMeshBinarySerializer().Serialize(path, tiledNavMesh);
+                }
+                else
+                {
+                    new NavMeshJsonSerializer().Serialize(path, tiledNavMesh);
+                }
+            }
+            catch (Exception e)
+            {
+                if (!interceptExceptions)
+                    throw;
+                else
+                {
+                    Console.WriteLine("Navmesh saving failed with exception:" + Environment.NewLine + e.ToString());
+                    return;
+                }
+            }
 
 			Console.WriteLine("Saved to file!");
 		}

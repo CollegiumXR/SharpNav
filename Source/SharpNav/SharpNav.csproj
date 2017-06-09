@@ -137,6 +137,7 @@
     <Compile Include="HeightPatch.cs" />
     <Compile Include="Crowds\LocalBoundary.cs" />
     <Compile Include="IO\Json\AreaConverter.cs" />
+    <Compile Include="IO\Json\NavMeshBinarySerializer.cs" />
     <Compile Include="IO\Json\PolyIdConverter.cs" />
     <Compile Include="IO\Json\Vector3Converter.cs" />
     <Compile Include="IO\Json\NavMeshJsonSerializer.cs" />
