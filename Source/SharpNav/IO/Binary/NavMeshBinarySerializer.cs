@@ -64,6 +64,11 @@ namespace SharpNav.IO.Binary
         {
             using (var binaryReader = new BinaryReader(new FileStream(path, FileMode.Open, FileAccess.Read)))
             {
+                var header = Encoding.ASCII.GetString(binaryReader.ReadBytes(0x4));
+
+                if (!header.Equals("SNb_"))
+                    throw new Exception("Invalid SharpNav binary file (.snb) format.");
+                
                 var x = binaryReader.ReadSingle();
                 var y = binaryReader.ReadSingle();
                 var z = binaryReader.ReadSingle();
