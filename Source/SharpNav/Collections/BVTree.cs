@@ -30,7 +30,7 @@ namespace SharpNav.Collections
 		/// <summary>
 		/// Nodes in the tree
 		/// </summary>
-		public Node[] nodes;
+		private Node[] nodes;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BVTree"/> class.
