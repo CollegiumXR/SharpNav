@@ -305,6 +305,7 @@ namespace SharpNav.IO.Binary
                 }
 
                 tile.Polys = polys;
+                tile.PolyCount = polysCount;
 
                 var vertsCount = binaryReader.ReadInt32();
                 var verts = new Vector3[vertsCount];
