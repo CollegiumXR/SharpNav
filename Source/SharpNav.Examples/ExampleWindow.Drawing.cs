@@ -117,9 +117,10 @@ namespace SharpNav.Examples
 			agentCylinder = new AgentCylinder(12, 0.5f, 2f);
 		}
 
-		private void LoadLevel()
+		private void LoadLevel(string path)
 		{
-			level = new ObjModel("nav_test.obj");
+
+			level = new ObjModel(path);
 			var levelTris = level.GetTriangles();
 			var levelNorms = level.GetNormals();
 			levelNumInds = levelTris.Length * 3;

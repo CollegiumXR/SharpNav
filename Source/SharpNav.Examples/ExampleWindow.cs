@@ -128,8 +128,8 @@ namespace SharpNav.Examples
 			base.OnLoad(e);
 
 			InitializeOpenGL();
-
-			LoadLevel();
+            
+			LoadLevel("nav_test.obj");
 			LoadDebugMeshes();
 
 			gwenRenderer = new Gwen.Renderer.OpenTK();
@@ -164,9 +164,9 @@ namespace SharpNav.Examples
 			float camSpeed = 10f * (float)e.Time * (isShiftDown ? 3f : 1f) * camSpeedMod;
 			float zoomSpeed = (float)Math.PI * (float)e.Time * (isShiftDown ? 0.2f : 0.1f) * camSpeedMod;
 
-            if (k[Key.R] || m[MouseButton.Button9])
+            if (k[Key.R] || m[MouseButton.Button1])
                 camSpeedMod = camSpeedMod + 1.0f <= 15 ? camSpeedMod + 1.0f : camSpeedMod;
-            else if (k[Key.T] || m[MouseButton.LastButton])
+            else if (k[Key.T] || m[MouseButton.Button2])
                 camSpeedMod = camSpeedMod - 1.0f > 0 ? camSpeedMod - 1.0f : camSpeedMod;
 
             if (k[Key.W])
@@ -229,7 +229,7 @@ namespace SharpNav.Examples
             else if (e.Key == Key.F5)
                 Gwen.Platform.Neutral.FileSave("Save NavMesh to file", ".", "All SharpNav Files(.snb, .snx, .snj)|*.snb;*.snx;*.snj|SharpNav Binary(.snb)|*.snb|SharpNav XML(.snx)|*.snx|SharpNav JSON(.snj)|*.snj", SaveNavMeshToFile);
             else if (e.Key == Key.F9)
-                Gwen.Platform.Neutral.FileOpen("Load NavMesh from file", ".", "All SharpNav Files(.snb, .snx, .snj)|*.snb;*.snx;*.snj|SharpNav Binary(.snb)|*.snb|SharpNav XML(.snx)|*.snx|SharpNav JSON(.snj)|*.snj", LoadNavMeshFromFile);
+                Gwen.Platform.Neutral.FileOpen("Load NavMesh or Obj file", ".", "All supported files(.snb, .snx, .snj, .obj)|*.snb;*.snx;*.snj;*.obj|Wavefront Obj File(.obj)|*.obj|SharpNav Binary(.snb)|*.snb|SharpNav XML(.snx)|*.snx|SharpNav JSON(.snj)|*.snj", LoadFile);
             else if (e.Key == Key.F11)
                 WindowState = OpenTK.WindowState.Normal;
             else if (e.Key == Key.F12)
@@ -360,6 +360,38 @@ namespace SharpNav.Examples
 
 			base.OnUnload(e);
 		}
+
+        private void LoadFile(string path)
+        {
+            if (path != "")
+            {
+                var extension = System.IO.Path.GetExtension(path);
+
+                if (extension == ".obj")
+                {
+                    OnUnload(null);
+                    base.OnLoad(null);
+
+                    LoadLevel(path);
+                    LoadDebugMeshes();
+
+                    gwenRenderer = new Gwen.Renderer.OpenTK();
+                    gwenSkin = new Gwen.Skin.TexturedBase(gwenRenderer, "GwenSkin.png");
+                    gwenCanvas = new Gwen.Control.Canvas(gwenSkin);
+                    gwenInput = new Gwen.Input.OpenTK(this);
+
+                    gwenInput.Initialize(gwenCanvas);
+                    gwenCanvas.SetSize(Width, Height);
+                    gwenCanvas.ShouldDrawBackground = false;
+
+                    gwenProjection = Matrix4.CreateOrthographicOffCenter(0, Width, Height, 0, -1, 1);
+
+                    InitializeUI();
+                }
+                else
+                    LoadNavMeshFromFile(path);
+            }
+        }
 
 		private void LoadNavMeshFromFile(string path)
 		{
