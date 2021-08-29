@@ -44,7 +44,7 @@ namespace SharpNav.IO.Json
 			});
 		}
 
-		public override void Serialize(string path, TiledNavMesh mesh)
+        public override void Serialize(string path, TiledNavMesh mesh)
 		{
 			JObject root = new JObject();
 
@@ -76,9 +76,9 @@ namespace SharpNav.IO.Json
 			File.WriteAllText(path, root.ToString());
 		}
 
-		public override TiledNavMesh Deserialize(string path)
+        public override TiledNavMesh Deserialize(string path)
 		{
-			JObject root = JObject.Parse(File.ReadAllText(path));
+            JObject root = JObject.Parse(File.ReadAllText(path));
 
 			if (root["meta"]["version"]["snj"].ToObject<int>() != FormatVersion)
 				throw new ArgumentException("The version of the file does not match the version of the parser. Consider using an older version of SharpNav or re-generating your .snj meshes.");
@@ -131,8 +131,8 @@ namespace SharpNav.IO.Json
 
 			return result;
 		}
-
-		private NavTile DeserializeMeshTile(JToken token, NavPolyIdManager manager, out NavPolyId refId)
+       
+        private NavTile DeserializeMeshTile(JToken token, NavPolyIdManager manager, out NavPolyId refId)
 		{
 			refId = token["polyId"].ToObject<NavPolyId>(serializer);
 			Vector2i location = token["location"].ToObject<Vector2i>(serializer);
@@ -160,5 +160,5 @@ namespace SharpNav.IO.Json
 
 			return result;
 		}
-	}
+    }
 }

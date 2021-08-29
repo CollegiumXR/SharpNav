@@ -19,6 +19,7 @@ using SharpNav;
 using SharpNav.Crowds;
 using SharpNav.Geometry;
 using SharpNav.IO.Json;
+using SharpNav.IO.Binary;
 using SharpNav.Pathfinding;
 
 using Key = OpenTK.Input.Key;
@@ -104,6 +105,8 @@ namespace SharpNav.Examples
 		private Gwen.Control.Canvas gwenCanvas;
 		private Matrix4 gwenProjection;
 
+        private float camSpeedMod = 1.0f;
+
 		public ExampleWindow()
 			: base(800, 600, new GraphicsMode(32, 8, 0, 4))
 		{
@@ -125,8 +128,8 @@ namespace SharpNav.Examples
 			base.OnLoad(e);
 
 			InitializeOpenGL();
-
-			LoadLevel();
+            
+			LoadLevel("nav_test.obj");
 			LoadDebugMeshes();
 
 			gwenRenderer = new Gwen.Renderer.OpenTK();
@@ -152,16 +155,21 @@ namespace SharpNav.Examples
 
 			KeyboardState k = OpenTK.Input.Keyboard.GetState();
 			MouseState m = OpenTK.Input.Mouse.GetState();
-
+            
 			bool isShiftDown = false;
 			if (k[Key.LShift] || k[Key.RShift])
 				isShiftDown = true;
 
 			//TODO make cam speed/shift speedup controllable from GUI
-			float camSpeed = 10f * (float)e.Time * (isShiftDown ? 3f : 1f);
-			float zoomSpeed = (float)Math.PI * (float)e.Time * (isShiftDown ? 0.2f : 0.1f);
+			float camSpeed = 10f * (float)e.Time * (isShiftDown ? 3f : 1f) * camSpeedMod;
+			float zoomSpeed = (float)Math.PI * (float)e.Time * (isShiftDown ? 0.2f : 0.1f) * camSpeedMod;
 
-			if (k[Key.W])
+            if (k[Key.R] || m[MouseButton.Button1])
+                camSpeedMod = camSpeedMod + 1.0f <= 15 ? camSpeedMod + 1.0f : camSpeedMod;
+            else if (k[Key.T] || m[MouseButton.Button2])
+                camSpeedMod = camSpeedMod - 1.0f > 0 ? camSpeedMod - 1.0f : camSpeedMod;
+
+            if (k[Key.W])
 				cam.Move(-camSpeed);
 			if (k[Key.A])
 				cam.Strafe(-camSpeed);
@@ -186,10 +194,11 @@ namespace SharpNav.Examples
 					zoom = 0.002f;
 			}
 
+
 			if (m[MouseButton.Right])
 			{
-				cam.RotatePitch((m.X - prevM.X) * (float)e.Time * 2f);
-				cam.RotateHeading((prevM.Y - m.Y) * (float)e.Time * 2f);
+				cam.RotatePitch((m.X - prevM.X) * (float)e.Time * 2f * (isShiftDown ? 3f : 1f));
+				cam.RotateHeading((prevM.Y - m.Y) * (float)e.Time * 2f * (isShiftDown ? 3f : 1f));
 			}
 
 			float aspect = Width / (float)Height;
@@ -213,16 +222,18 @@ namespace SharpNav.Examples
 			if (!Focused)
 				return;
 
-			if (e.Key == Key.Escape)
-				Exit();
-			else if (e.Key == Key.F5)
-				Gwen.Platform.Neutral.FileSave("Save NavMesh to file", ".", "All SharpNav Files(.snb, .snx, .snj)|*.snb;*.snx;*.snj|SharpNav Binary(.snb)|*.snb|SharpNav XML(.snx)|*.snx|SharpNav JSON(.snj)|*.snj", SaveNavMeshToFile);
-			else if (e.Key == Key.F9)
-				Gwen.Platform.Neutral.FileOpen("Load NavMesh from file", ".", "All SharpNav Files(.snb, .snx, .snj)|*.snb;*.snx;*.snj|SharpNav Binary(.snb)|*.snb|SharpNav XML(.snx)|*.snx|SharpNav JSON(.snj)|*.snj", LoadNavMeshFromFile);
-			else if (e.Key == Key.F11)
-				WindowState = OpenTK.WindowState.Normal;
-			else if (e.Key == Key.F12)
-				WindowState = OpenTK.WindowState.Fullscreen;
+            if (e.Key == Key.Escape)
+                Exit();
+            //else if (e.Key == Key.F4)
+            //    Gwen.Platform.Neutral.FileOpen("Load wavefront obj file", ".", "Wavefront obj file (.obj)|*.obj|", );
+            else if (e.Key == Key.F5)
+                Gwen.Platform.Neutral.FileSave("Save NavMesh to file", ".", "All SharpNav Files(.snb, .snx, .snj)|*.snb;*.snx;*.snj|SharpNav Binary(.snb)|*.snb|SharpNav XML(.snx)|*.snx|SharpNav JSON(.snj)|*.snj", SaveNavMeshToFile);
+            else if (e.Key == Key.F9)
+                Gwen.Platform.Neutral.FileOpen("Load NavMesh or Obj file", ".", "All supported files(.snb, .snx, .snj, .obj)|*.snb;*.snx;*.snj;*.obj|Wavefront Obj File(.obj)|*.obj|SharpNav Binary(.snb)|*.snb|SharpNav XML(.snx)|*.snx|SharpNav JSON(.snj)|*.snj", LoadFile);
+            else if (e.Key == Key.F11)
+                WindowState = OpenTK.WindowState.Normal;
+            else if (e.Key == Key.F12)
+                WindowState = OpenTK.WindowState.Fullscreen;
 
 			gwenInput.ProcessKeyDown(e);
 
@@ -350,13 +361,53 @@ namespace SharpNav.Examples
 			base.OnUnload(e);
 		}
 
+        private void LoadFile(string path)
+        {
+            if (path != "")
+            {
+                var extension = System.IO.Path.GetExtension(path);
+
+                if (extension == ".obj")
+                {
+                    OnUnload(null);
+                    base.OnLoad(null);
+
+                    LoadLevel(path);
+                    LoadDebugMeshes();
+
+                    gwenRenderer = new Gwen.Renderer.OpenTK();
+                    gwenSkin = new Gwen.Skin.TexturedBase(gwenRenderer, "GwenSkin.png");
+                    gwenCanvas = new Gwen.Control.Canvas(gwenSkin);
+                    gwenInput = new Gwen.Input.OpenTK(this);
+
+                    gwenInput.Initialize(gwenCanvas);
+                    gwenCanvas.SetSize(Width, Height);
+                    gwenCanvas.ShouldDrawBackground = false;
+
+                    gwenProjection = Matrix4.CreateOrthographicOffCenter(0, Width, Height, 0, -1, 1);
+
+                    InitializeUI();
+                }
+                else
+                    LoadNavMeshFromFile(path);
+            }
+        }
+
 		private void LoadNavMeshFromFile(string path)
 		{
 			try
 			{
+                var extension = System.IO.Path.GetExtension(path);
+                if (extension == ".snb")
+                {
+                    tiledNavMesh = new NavMeshBinarySerializer().Deserialize(path);
+                }
+                else
+                {
+                    tiledNavMesh = new NavMeshJsonSerializer().Deserialize(path);
+                }
 
-				tiledNavMesh = new NavMeshJsonSerializer().Deserialize(path);
-				navMeshQuery = new NavMeshQuery(tiledNavMesh, 2048);
+                navMeshQuery = new NavMeshQuery(tiledNavMesh, 2048);
 				hasGenerated = true;
 				displayMode = DisplayMode.NavMesh;
 			}
@@ -382,20 +433,28 @@ namespace SharpNav.Examples
 				return;
 			}
 
-			try
-			{
-				new NavMeshJsonSerializer().Serialize(path, tiledNavMesh);
-			}
-			catch (Exception e)
-			{
-				if (!interceptExceptions)
-					throw;
-				else
-				{
-					Console.WriteLine("Navmesh saving failed with exception:" + Environment.NewLine + e.ToString());
-					return;
-				}
-			}
+            try
+            {
+                var extension = System.IO.Path.GetExtension(path);
+                if (extension == ".snb")
+                {
+                    new NavMeshBinarySerializer().Serialize(path, tiledNavMesh);
+                }
+                else
+                {
+                    new NavMeshJsonSerializer().Serialize(path, tiledNavMesh);
+                }
+            }
+            catch (Exception e)
+            {
+                if (!interceptExceptions)
+                    throw;
+                else
+                {
+                    Console.WriteLine("Navmesh saving failed with exception:" + Environment.NewLine + e.ToString());
+                    return;
+                }
+            }
 
 			Console.WriteLine("Saved to file!");
 		}
@@ -523,7 +582,7 @@ namespace SharpNav.Examples
 				catch (Exception e)
 				{
 					Console.WriteLine("Pathfinding generation failed with exception" + Environment.NewLine + e.ToString());
-					hasGenerated = false;
+					//hasGenerated = false;
 				}
 
 				Label l = (Label)statusBar.FindChildByName("GenTime");
